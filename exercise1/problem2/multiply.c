@@ -31,7 +31,7 @@ static void init_A(Matrix_t *a, loop_t n)
 
 static void init_B(Matrix_t *b, loop_t n)
 {
-	init(b, n, 3.0, 1.0, 6.0);
+	init(b, n, 6.0, 1.0, 3.0);
 }
 
 static void print_matrix(Matrix_t *M, loop_t n)
@@ -116,14 +116,14 @@ int main(int argc, char *argv[])
 	for (loop_t i = 0; i < n; i++)
 		for (loop_t j = 0; j < n; j++)
 			for (loop_t k = 0; k < n; k++)
-				c[i*n + j] += a[i*n + k] * b[k*n + j];
+				c[i*n + j] += a[i*n + k] * b[j*n + k];
 	gettimeofday(&after, NULL);
 	double omp_time = (after.tv_sec - before.tv_sec)
 			+ (after.tv_usec - before.tv_usec) * 1e-6;
 	printf("omp time: %.2f\n", omp_time);
 
 	gettimeofday(&before, NULL);
-	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, a,
+	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, n, n, n, 1.0, a,
 			n, b, n, 0.0, c, n);
 	gettimeofday(&after, NULL);
 	double blas_time = (after.tv_sec - before.tv_sec)
