@@ -1,0 +1,8 @@
+
+Optimized, vectorized, OpenMP Code:
+  put this in FCFLAGS:
+    FCFLAGS=-O3 -march=native -fopenmp
+  (-O3 implies -ftree-vectorize)
+
+OpenACC-Support might be added with
+  -fopenacc

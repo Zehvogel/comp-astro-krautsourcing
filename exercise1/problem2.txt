@@ -1,0 +1,8 @@
+
+
+For n = 100000000 and 100 iterations:
+
+  - No optimization: 11.114 s
+  - With -ftree-vectorize: 11.003 s
+  - With OpenMP: 40.014 s
+  - With OpenACC: 19.393 s
