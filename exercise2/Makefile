@@ -1,7 +1,7 @@
 .PHONY: all clean
 
 CC=gcc
-CFLAGS=-g -Wall -Werror -Og -march=native -fsanitize=address -lm # -fopenmp -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
+CFLAGS=-ggdb -Wall -Werror -Og -march=native# -fsanitize=address -lm # -fopenmp -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
 
 all: planets plots.pdf
 
