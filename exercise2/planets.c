@@ -138,9 +138,15 @@ int main(int argc, char *argv[])
 
 			/* write output */
 			pwrite(file, &planets.x[j], sizeof(planets.x[j]),
-			       (i * 2 * M + 2*j) *sizeof(planets.x[j]));
+			       (i * 3 * M + 3*j) *sizeof(planets.x[j]));
 			pwrite(file, &planets.y[j], sizeof(planets.y[j]),
-			       (i * 2 * M + 2*j+1) *sizeof(planets.y[j]));
+			       (i * 3 * M + 3*j+1) *sizeof(planets.y[j]));
+
+			f_t L_z = planets.M[j] * (planets.x[j] * planets.dy[j]
+						 -planets.y[j] * planets.dx[j]);
+
+			pwrite(file, &L_z, sizeof(L_z),
+			       (i * 3 * M + 3*j+2) *sizeof(L_z));
 		}
 	}
 
