@@ -135,15 +135,13 @@ int main(int argc, char *argv[])
 			// explicit euler
 			planets.dx[j] += dt * force_buffer[2*j];
 			planets.dy[j] += dt * force_buffer[2*j+1];
+
+			/* write output */
+			pwrite(file, &planets.x[j], sizeof(planets.x[j]),
+			       (i * 2 * M + 2*j) *sizeof(planets.x[j]));
+			pwrite(file, &planets.y[j], sizeof(planets.y[j]),
+			       (i * 2 * M + 2*j+1) *sizeof(planets.y[j]));
 		}
-		pwrite(file, &planets.x[1], sizeof(planets.x[1]),
-		       i * 2 *sizeof(planets.x[1]));
-		pwrite(file, &planets.y[1], sizeof(planets.y[1]),
-		       (i * 2 + 1) * sizeof(planets.y[1]));
-		printf("it: %ld\t x: %f\t y: %f\n", i, planets.x[1],
-				planets.y[1]);
-		printf("it: %ld\t x: %f\t y: %f\n", i, planets.x[0],
-				planets.y[0]);
 	}
 
 	free_planets(&planets);
