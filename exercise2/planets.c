@@ -61,7 +61,10 @@ void init_planets(struct bodies *planets, loop_t M)
 	/* Jupiter */
 	if (M == 3) {
 		planets->M[2] = 317.8;
-		/* tbd */
+		planets->x[2] = 5.0;
+		planets->y[2] = 0.0;
+		planets->dx[2] = 0.0;
+		planets->dy[2] = -2*PI*0.42;
 	}
 }
 
@@ -81,8 +84,8 @@ void free_planets(struct bodies *planets)
 
 int main(int argc, char *argv[])
 {
-	loop_t M  = 2;
-	loop_t t  = 1;
+	loop_t M  = 3;
+	loop_t t  = 150;
 	float dt = .0026;
 
 	switch (argc) {
@@ -103,7 +106,7 @@ int main(int argc, char *argv[])
 			return EINVAL;
 	}
 
-	int file = open("planets.bin", O_CREAT | O_WRONLY | O_TRUNC);
+	int file = open("planets.bin", O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWRITE);
 	if (file == - 1)
 		return errno;
 
@@ -112,13 +115,24 @@ int main(int argc, char *argv[])
 	init_planets(&planets, M);
 
 	f_t force_buffer[2 * M];
+#ifdef USE_VELOCITY_VERLET
+	f_t old_force_buffer[2 * M];
+#endif
 
 	for (loop_t i = 0; i * dt < t; i++) {
+#ifdef USE_VELOCITY_VERLET
+		memcpy(old_force_buffer, force_buffer, sizeof(force_buffer));
+#endif
 		memset(force_buffer, 0, 2 * M * sizeof(*force_buffer));
 		for (loop_t j = 0; j < M; j++) {
-			planets.x[j] += planets.dx[j] * dt;
-			planets.y[j] += planets.dy[j] * dt;
-
+#ifdef USE_VELOCITY_VERLET
+			if (i != 0) {
+				planets.x[j] += planets.dx[j] * dt
+						+ old_force_buffer[2*j] * dt * dt;
+				planets.y[j] += planets.dy[j] * dt
+						+ old_force_buffer[2*j+1] * dt * dt;
+			}
+#endif
 			for (loop_t k = j + 1; k < M; k++) {
 				f_t r_x = planets.x[j] - planets.x[k];
 				f_t r_y = planets.y[j] - planets.y[k];
@@ -132,9 +146,27 @@ int main(int argc, char *argv[])
 				force_buffer[2*k] -= a * r_x / r * planets.M[j];
 				force_buffer[2*k+1] -= a * r_y / r * planets.M[j];
 			}
+#ifdef USE_VELOCITY_VERLET
+			//TODO
+			//given x(t), v(t)
+			//calculated a(t)
+			//
+			//for vv now do
+			//x(t+1) = x(t) + v(t)dt + 0.5a(t)dt^2
+			//calc a(t+1)
+			//v(t+1) = v(t) + 0.5 * (a(t) + a(t+1)) * dt
+			planets.dx[j] += 0.5 * (force_buffer[2*j]
+						+ old_force_buffer[2*j]) * dt;
+			planets.dy[j] += 0.5 * (force_buffer[2*j+1]
+						+ old_force_buffer[2*j+1]) * dt;
+#else
 			// explicit euler
 			planets.dx[j] += dt * force_buffer[2*j];
 			planets.dy[j] += dt * force_buffer[2*j+1];
+			planets.x[j] += planets.dx[j] * dt;
+			planets.y[j] += planets.dy[j] * dt;
+#endif
+
 
 			/* write output */
 			pwrite(file, &planets.x[j], sizeof(planets.x[j]),
