@@ -115,24 +115,14 @@ int main(int argc, char *argv[])
 	init_planets(&planets, M);
 
 	f_t force_buffer[2 * M];
+	memset(force_buffer, 0, sizeof(force_buffer));
 #ifdef USE_VELOCITY_VERLET
 	f_t old_force_buffer[2 * M];
+	memset(old_force_buffer, 0, sizeof(force_buffer));
 #endif
 
 	for (loop_t i = 0; i * dt < t; i++) {
-#ifdef USE_VELOCITY_VERLET
-		memcpy(old_force_buffer, force_buffer, sizeof(force_buffer));
-#endif
-		memset(force_buffer, 0, 2 * M * sizeof(*force_buffer));
 		for (loop_t j = 0; j < M; j++) {
-#ifdef USE_VELOCITY_VERLET
-			if (i != 0) {
-				planets.x[j] += planets.dx[j] * dt
-						+ old_force_buffer[2*j] * dt * dt;
-				planets.y[j] += planets.dy[j] * dt
-						+ old_force_buffer[2*j+1] * dt * dt;
-			}
-#endif
 			for (loop_t k = j + 1; k < M; k++) {
 				f_t r_x = planets.x[j] - planets.x[k];
 				f_t r_y = planets.y[j] - planets.y[k];
@@ -147,20 +137,31 @@ int main(int argc, char *argv[])
 				force_buffer[2*k+1] -= a * r_y / r * planets.M[j];
 			}
 #ifdef USE_VELOCITY_VERLET
-			//TODO
 			//given x(t), v(t)
-			//calculated a(t)
+			//calculate a(t)
 			//
 			//for vv now do
 			//x(t+1) = x(t) + v(t)dt + 0.5a(t)dt^2
 			//calc a(t+1)
 			//v(t+1) = v(t) + 0.5 * (a(t) + a(t+1)) * dt
+
+			//might still be wrong but best working version yet
+
+			//calc initial a
+			if (i != 0) {
 			planets.dx[j] += 0.5 * (force_buffer[2*j]
 						+ old_force_buffer[2*j]) * dt;
 			planets.dy[j] += 0.5 * (force_buffer[2*j+1]
 						+ old_force_buffer[2*j+1]) * dt;
+			planets.x[j] += planets.dx[j] * dt
+					+ 0.5 * force_buffer[2*j] * dt * dt;
+			planets.y[j] += planets.dy[j] * dt
+					+ 0.5 * force_buffer[2*j+1] * dt * dt;
+			}
 #else
 			// explicit euler
+			// wait this isn't explicit euler
+			// this is semi-implicit euler
 			planets.dx[j] += dt * force_buffer[2*j];
 			planets.dy[j] += dt * force_buffer[2*j+1];
 			planets.x[j] += planets.dx[j] * dt;
@@ -180,6 +181,10 @@ int main(int argc, char *argv[])
 			pwrite(file, &L_z, sizeof(L_z),
 			       (i * 3 * M + 3*j+2) *sizeof(L_z));
 		}
+#ifdef USE_VELOCITY_VERLET
+		memcpy(old_force_buffer, force_buffer, sizeof(force_buffer));
+#endif
+		memset(force_buffer, 0, sizeof(force_buffer));
 	}
 
 	free_planets(&planets);
