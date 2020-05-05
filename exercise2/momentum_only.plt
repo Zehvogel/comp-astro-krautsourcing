@@ -20,7 +20,7 @@ s=1
 #"planets.bin" binary format="%float%float%float%float%float%float%float%float%float%float" using 5:6 every s title "Earth" with lines,\
 #"planets.bin" binary format="%float%float%float%float%float%float%float%float%float%float" using 8:9 every s title "Jupiter" with lines;
 ##plot "planets.bin" binary format="%double%double" title "Earth" with lines;
-set title "Angular Momentum and Energy"
+set title "Angular Momentum"
 unset xrange
 unset yrange
 set xlabel "Time [days]"
