@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 			planets.y[j] += planets.dy[j] * dt
 					+ 0.5 * force_buffer[2*j+1] * dt * dt;
 			}
-#else
+#elif defined(USE_SYMPLECTIC_EULER)
 			// explicit euler
 			// wait this isn't explicit euler
 			// this is semi-implicit euler
@@ -166,6 +166,12 @@ int main(int argc, char *argv[])
 			planets.dy[j] += dt * force_buffer[2*j+1];
 			planets.x[j] += planets.dx[j] * dt;
 			planets.y[j] += planets.dy[j] * dt;
+#else
+			// this is explicit euler :(
+			planets.x[j] += planets.dx[j] * dt;
+			planets.y[j] += planets.dy[j] * dt;
+			planets.dx[j] += dt * force_buffer[2*j];
+			planets.dy[j] += dt * force_buffer[2*j+1];
 #endif
 
 
