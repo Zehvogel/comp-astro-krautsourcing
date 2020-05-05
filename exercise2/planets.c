@@ -122,6 +122,7 @@ int main(int argc, char *argv[])
 #endif
 
 	for (loop_t i = 0; i * dt < t; i++) {
+		f_t E = 0;
 		for (loop_t j = 0; j < M; j++) {
 			for (loop_t k = j + 1; k < M; k++) {
 				f_t r_x = planets.x[j] - planets.x[k];
@@ -135,6 +136,9 @@ int main(int argc, char *argv[])
 				force_buffer[2*j+1] += a * r_y / r * planets.M[k];
 				force_buffer[2*k] -= a * r_x / r * planets.M[j];
 				force_buffer[2*k+1] -= a * r_y / r * planets.M[j];
+
+				// add potential energy
+				E += G / r * (planets.M[j] + planets.M[k]);
 			}
 #ifdef USE_VELOCITY_VERLET
 			//given x(t), v(t)
@@ -174,18 +178,20 @@ int main(int argc, char *argv[])
 			planets.dy[j] += dt * force_buffer[2*j+1];
 #endif
 
+			// add kinetic energy
+			E += 0.5 * planets.M[j] * (planets.dx[j] * planets.dx[j]
+						  +planets.dy[j] * planets.dy[j]);
 
 			/* write output */
-			pwrite(file, &planets.x[j], sizeof(planets.x[j]),
-			       (i * 3 * M + 3*j) *sizeof(planets.x[j]));
-			pwrite(file, &planets.y[j], sizeof(planets.y[j]),
-			       (i * 3 * M + 3*j+1) *sizeof(planets.y[j]));
+			if (j == 0)
+				write(file, &E, sizeof(E));
+			write(file, &planets.x[j], sizeof(planets.x[j]));
+			write(file, &planets.y[j], sizeof(planets.y[j]));
 
 			f_t L_z = planets.M[j] * (planets.x[j] * planets.dy[j]
 						 -planets.y[j] * planets.dx[j]);
 
-			pwrite(file, &L_z, sizeof(L_z),
-			       (i * 3 * M + 3*j+2) *sizeof(L_z));
+			write(file, &L_z, sizeof(L_z));
 		}
 #ifdef USE_VELOCITY_VERLET
 		memcpy(old_force_buffer, force_buffer, sizeof(force_buffer));
