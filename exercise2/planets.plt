@@ -24,7 +24,8 @@ unset xrange
 unset yrange
 #set yrange [0 : -15000]
 #set logscale y
-plot "planets.bin" binary format="%float%float%float%float%float%float%float%float%float" using 3 title "L_z Sun" with lines,\
-"planets.bin" binary format="%float%float%float%float%float%float%float%float%float" using 6 title "L_z Earth" with lines,\
-"planets.bin" binary format="%float%float%float%float%float%float%float%float%float" using 9 title "L_z Jupiter" with lines;
+first(x) = ($0 > 0 ? base : base = x)
+plot "planets.bin" binary format="%float%float%float%float%float%float%float%float%float" using (first($3+$6+$9) / ($3+$6+$9)) title "%L_z" with lines;#,\
+#"planets.bin" binary format="%float%float%float%float%float%float%float%float%float" using ($6) title "L_z Earth" with lines,\
+#"planets.bin" binary format="%float%float%float%float%float%float%float%float%float" using ($9) title "L_z Jupiter" with lines;
 #unset multiplot
