@@ -7,14 +7,16 @@
 #include <fcntl.h>
 #include <math.h>
 #include <string.h>
+#ifdef USE_RAYLIB
+#include <raylib.h>
+#endif
 
 /*
- * TODO: recheck because i messed up somewhere
  * Dimension choices:
  * Length: AU
  * Mass: Earth masses
  * Time: Earth years
- * Velocity: AU / (2*PI earth years) to comply with the given init
+ * Velocity: AU / (2*pi earth years) to comply with the given init
  */
 
 #ifdef DOUBLE_PRECISION
@@ -23,7 +25,7 @@ typedef double f_t;
 typedef float f_t;
 #endif
 
-const f_t PI = 3.14159265358979323846;
+const f_t pi = 3.14159265358979323846;
 const f_t G = 1.184e-4; /* in reduced units */
 
 struct bodies {
@@ -56,7 +58,7 @@ void init_planets(struct bodies *planets, loop_t M)
 	planets->x[1] = 1.0;
 	planets->y[1] = 0.0;
 	planets->dx[1] = 0.0;
-	planets->dy[1] = -2*PI;
+	planets->dy[1] = -2*pi;
 
 	/* Jupiter */
 	if (M == 3) {
@@ -64,7 +66,7 @@ void init_planets(struct bodies *planets, loop_t M)
 		planets->x[2] = 5.0;
 		planets->y[2] = 0.0;
 		planets->dx[2] = 0.0;
-		planets->dy[2] = -2*PI*0.42;
+		planets->dy[2] = -2*pi*0.42;
 	}
 }
 
@@ -88,6 +90,7 @@ int main(int argc, char *argv[])
 	loop_t t  = 150;
 	float dt = .0026;
 
+	/*TODO: use getopt instead */
 	switch (argc) {
 		case 1:
 			/* nothing to do */
@@ -106,9 +109,14 @@ int main(int argc, char *argv[])
 			return EINVAL;
 	}
 
+#ifdef USE_RAYLIB
+	InitWindow(800, 600, "Planets");
+	SetTargetFPS(60);
+#else
 	int file = open("planets.bin", O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWRITE);
 	if (file == - 1)
 		return errno;
+#endif
 
 	struct bodies planets;
 
@@ -121,7 +129,13 @@ int main(int argc, char *argv[])
 	memset(old_force_buffer, 0, sizeof(force_buffer));
 #endif
 
+#ifdef USE_RAYLIB
+	loop_t frameskip = 10;
+	loop_t i = 0;
+	while (!WindowShouldClose()) {
+#else
 	for (loop_t i = 0; i * dt < t; i++) {
+#endif
 		f_t E = 0;
 		for (loop_t j = 0; j < M; j++) {
 			for (loop_t k = j + 1; k < M; k++) {
@@ -182,6 +196,7 @@ int main(int argc, char *argv[])
 			E += 0.5 * planets.M[j] * (planets.dx[j] * planets.dx[j]
 						  +planets.dy[j] * planets.dy[j]);
 
+#ifndef USE_RAYLIB
 			/* write output */
 			if (j == 0)
 				write(file, &E, sizeof(E));
@@ -192,15 +207,53 @@ int main(int argc, char *argv[])
 						 -planets.y[j] * planets.dx[j]);
 
 			write(file, &L_z, sizeof(L_z));
+#endif
 		}
 #ifdef USE_VELOCITY_VERLET
 		memcpy(old_force_buffer, force_buffer, sizeof(force_buffer));
 #endif
 		memset(force_buffer, 0, sizeof(force_buffer));
+#ifdef USE_RAYLIB
+		/* handle with care */
+//		if (IsKeyDown(KEY_UP))
+//			frameskip++;
+//		if (IsKeyDown(KEY_DOWN))
+//			frameskip--;
+//
+		if (i % frameskip == 0) {
+
+		BeginDrawing();
+
+		ClearBackground(BLACK);
+
+		DrawText(TextFormat("frameskip: %d", frameskip), 10, 30, 20, DARKGREEN);
+
+		DrawFPS(10,10);
+
+		Vector2 sunPos = {50*planets.x[0]+400, 50*planets.y[0]+300};
+		DrawCircleV(sunPos, 20, GOLD);
+
+		Vector2 earthPos = {50*planets.x[1]+400, 50*planets.y[1]+300};
+		DrawCircleV(earthPos, 5, BLUE);
+
+		Vector2 jupPos = {50*planets.x[2]+400, 50*planets.y[2]+300};
+		DrawCircleV(jupPos, 9, BEIGE);
+
+		EndDrawing();
+
+		}
+
+		i++;
+#endif
 	}
 
 	free_planets(&planets);
+#ifdef USE_RAYLIB
+	CloseWindow();
+#else
 	close(file);
+#endif
+
 
 	return EXIT_SUCCESS;
 }
