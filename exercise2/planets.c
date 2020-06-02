@@ -70,12 +70,21 @@ static void init_planets(struct bodies *planets, loop_t M)
 	planets->dy[1] = -2*pi;
 
 	/* Jupiter */
-	if (M == 3) {
+	if (M >= 3) {
 		planets->M[2] = 317.8;
 		planets->x[2] = 5.0;
 		planets->y[2] = 0.0;
 		planets->dx[2] = 0.0;
 		planets->dy[2] = -2*pi*0.42;
+	}
+
+	/* Mars */
+	if (M >= 4) {
+		planets->M[3] = 0.107;
+		planets->x[3] = -1.524;
+		planets->y[3] = 0.0;
+		planets->dx[3] = 0.0;
+		planets->dy[3] = 2*pi*0.81;
 	}
 }
 
@@ -91,7 +100,7 @@ static void free_planets(struct bodies *planets)
 int main(int argc, char *argv[])
 {
 	/* needs more refactoring to work with M = 2 again */
-	loop_t M  = 3;
+	loop_t M  = 4;
 
 	loop_t t  = 150;
 	float dt = .0026;
@@ -271,6 +280,11 @@ int main(int argc, char *argv[])
 
 			Vector2 jupPos = {50*planets.x[2]+400, 50*planets.y[2]+300};
 			DrawCircleV(jupPos, 9, BEIGE);
+			Vector2 jupdotPos = {50*planets.x[2]+400-3, 50*planets.y[2]+300+2};
+			DrawCircleV(jupdotPos, 3, RED);
+
+			Vector2 marsPos = {50*planets.x[3]+400, 50*planets.y[3]+300};
+			DrawCircleV(marsPos, 3, ORANGE);
 
 			EndDrawing();
 
