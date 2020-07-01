@@ -2,13 +2,14 @@
 
 default: encrypt
 
-encrypt: exam.md.gpg
+encrypt: container.tar.gz.gpg
 
-exam.md.gpg: exam.md
-	cat exam.key | gpg --batch --yes --passphrase-fd 0 --output $@ --symmetric $^
+container.tar.gz.gpg: container.hidden
+	rm -f $@
+	tar -cz $^ | gpg --batch --yes --passphrase-file container.key --output $@ --symmetric --
 
-decrypt: exam.md
+decrypt: container.hidden
 
-exam.md: exam.md.gpg
-	cat exam.key | gpg --batch --yes --passphrase-fd 0 --output $@ --decrypt $^ 
-
+container.hidden: container.tar.gz.gpg
+	rm -rf $@
+	gpg --batch --yes --passphrase-file container.key --decrypt $^ | tar -xz
